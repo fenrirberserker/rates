@@ -1,0 +1,13 @@
+app:
+  name: bitcoin
+  isCloud: false
+
+
+
+  aws:
+    dynamodb:
+      endpoint: http://localhost:4566
+    ses:
+      config:
+        from: mlex.alba@gmail.com
+        to: mlex.alba@gmail.com
