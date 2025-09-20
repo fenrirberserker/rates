@@ -1,8 +1,9 @@
+server:
+  port: 8080
+
 app:
   name: bitcoin
   isCloud: false
-
-
 
   aws:
     dynamodb:

@@ -1,6 +1,4 @@
 plugins {
-	id 'org.springframework.boot' version '2.7.18' // Updated to stable
-	id 'io.spring.dependency-management' version '1.1.6' // Latest
 	id 'java'
 	id 'maven-publish'
 }
@@ -9,33 +7,23 @@ group = 'com.rates'
 version = '0.0.1-SNAPSHOT'
 
 wrapper {
-    gradleVersion = '9.0' // or another recent version
+    gradleVersion = '8.5'
 }
 
-
-
-configurations {
-	compileOnly
-	annotationProcessor
+allprojects {
+	repositories {
+		mavenCentral()
+		maven { url 'https://repo.spring.io/milestone' }
+		maven { url 'https://repo.spring.io/snapshot' }
+	}
 }
 
-repositories {
-	mavenCentral()
-	maven { url 'https://repo.spring.io/milestone' }
-	maven { url 'https://repo.spring.io/snapshot' }
-}
-
-dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-web:2.7.18'
-	compileOnly 'org.projectlombok:lombok:1.18.34'
-	annotationProcessor 'org.projectlombok:lombok:1.18.34'
-	testImplementation 'org.springframework.boot:spring-boot-starter-test:2.7.18'
-	implementation 'org.bitcoinj:bitcoinj-core:0.16.2'
-	implementation platform('software.amazon.awssdk:bom:2.20.0')
-	implementation 'software.amazon.awssdk:sns'
-	implementation 'software.amazon.awssdk:ses'
-	implementation 'software.amazon.awssdk:dynamodb'
-
+subprojects {
+	apply plugin: 'java'
+	apply plugin: 'maven-publish'
+	
+	group = 'com.rates'
+	version = '0.0.1-SNAPSHOT'
 }
 
 

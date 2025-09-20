@@ -35,3 +35,35 @@ out/
 
 ### VS Code ###
 .vscode/
+
+### Auto-generated ###
+*.log
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+*.zip
+*.tar.gz
+*.rar
+hs_err_pid*
+replay_pid*
+.attach_pid*
+
+### IDE generated ###
+*.swp
+*.swo
+*~
+.metadata/
+.recommenders/
+RemoteSystemsTempFiles/
+
+### OS generated ###
+.DS_Store?
+ehthumbs.db
+Icon?
+Thumbs.db
