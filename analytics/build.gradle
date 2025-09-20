@@ -4,7 +4,7 @@ plugins {
 	id 'java'
 }
 
-group = 'com.rates'
+group = 'com.trader'
 version = '0.0.1-SNAPSHOT'
 
 configurations {

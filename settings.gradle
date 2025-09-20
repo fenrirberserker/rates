@@ -6,6 +6,6 @@ pluginManagement {
 	}
 }
 
-rootProject.name = 'rates'
+rootProject.name = 'trader'
 
 include 'analytics'

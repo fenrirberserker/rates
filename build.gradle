@@ -3,7 +3,7 @@ plugins {
 	id 'maven-publish'
 }
 
-group = 'com.rates'
+group = 'com.trader'
 version = '0.0.1-SNAPSHOT'
 
 wrapper {
@@ -22,7 +22,7 @@ subprojects {
 	apply plugin: 'java'
 	apply plugin: 'maven-publish'
 	
-	group = 'com.rates'
+	group = 'com.trader'
 	version = '0.0.1-SNAPSHOT'
 }
 
