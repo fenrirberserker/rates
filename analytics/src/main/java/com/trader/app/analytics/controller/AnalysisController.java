@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
+import java.util.concurrent.ExecutionException;
 
 @RestController
 @RequestMapping("/analyse")
@@ -16,7 +17,7 @@ public class AnalysisController {
     private Technical technical;
 
     @GetMapping("/technical")
-    public String technical() throws IOException {
+    public String technical() throws IOException, ExecutionException, InterruptedException {
         technical.readValues();
         return "Technical analysis completed - check console output";
     }

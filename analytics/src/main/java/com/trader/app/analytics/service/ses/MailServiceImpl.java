@@ -11,10 +11,10 @@ import software.amazon.awssdk.services.ses.model.*;
 @Service
 public class MailServiceImpl implements MailService {
 
-    @Value("${app.aws.ses.config.from}")
+    @Value("${aws.ses.config.from}")
     private String from;
 
-    @Value("${app.aws.ses.config.to}")
+    @Value("${aws.ses.config.to}")
     private String to;
 
     private final SesClient sesClient;

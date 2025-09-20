@@ -19,7 +19,7 @@ public class Config {
     @Value("${app.isCloud}")
     private boolean isCloud;
 
-    @Value("${app.aws.dynamodb.endpoint}")
+    @Value("${aws.dynamodb.endpoint}")
     private String dynamodbEndpoint;
 
     @Bean
