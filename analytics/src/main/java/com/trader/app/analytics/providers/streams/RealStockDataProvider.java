@@ -2,6 +2,7 @@ package com.trader.app.analytics.providers.streams;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
@@ -11,9 +12,11 @@ public class RealStockDataProvider {
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
     
-    // Get free API key from: https://www.alphavantage.co/support/#api-key
-    private static final String API_KEY = "YOUR_API_KEY_HERE";
-    private static final String BASE_URL = "https://www.alphavantage.co/query";
+    @Value("${stock.api.key}")
+    private String apiKey;
+    
+    @Value("${stock.api.base-url}")
+    private String baseUrl;
     
     public RealStockDataProvider() {
         this.restTemplate = new RestTemplate();
@@ -23,7 +26,7 @@ public class RealStockDataProvider {
     public StockData getRealTimeQuote(String symbol) {
         try {
             String url = String.format("%s?function=GLOBAL_QUOTE&symbol=%s&apikey=%s", 
-                                     BASE_URL, symbol, API_KEY);
+                                     baseUrl, symbol, apiKey);
             
             String response = restTemplate.getForObject(url, String.class);
             JsonNode root = objectMapper.readTree(response);
@@ -49,7 +52,7 @@ public class RealStockDataProvider {
     public StockData getIntradayData(String symbol) {
         try {
             String url = String.format("%s?function=TIME_SERIES_INTRADAY&symbol=%s&interval=1min&apikey=%s", 
-                                     BASE_URL, symbol, API_KEY);
+                                     baseUrl, symbol, apiKey);
             
             String response = restTemplate.getForObject(url, String.class);
             JsonNode root = objectMapper.readTree(response);

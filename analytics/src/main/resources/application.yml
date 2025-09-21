@@ -15,3 +15,10 @@ aws:
 
 analytics:
   elementsInTheMiddle: 5
+
+stock:
+  data:
+    use-real: false
+  api:
+    key: YOUR_API_KEY_HERE
+    base-url: https://www.alphavantage.co/query
