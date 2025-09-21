@@ -18,7 +18,6 @@ public class AnalysisController {
 
     @GetMapping("/technical")
     public String technical() throws IOException, ExecutionException, InterruptedException {
-        technical.readValues();
-        return "Technical analysis completed - check console output";
+        return technical.readValues();
     }
 }

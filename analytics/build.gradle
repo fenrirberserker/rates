@@ -28,4 +28,6 @@ dependencies {
 	implementation 'software.amazon.awssdk:sns'
 	implementation 'software.amazon.awssdk:ses'
 	implementation 'software.amazon.awssdk:dynamodb'
+	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.13.5'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
 }

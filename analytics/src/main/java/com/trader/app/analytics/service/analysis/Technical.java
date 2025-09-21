@@ -39,7 +39,7 @@ public class Technical {
 
 
 
-    public void readValues() throws IOException, ExecutionException, InterruptedException {
+    public String readValues() throws IOException, ExecutionException, InterruptedException {
         ObjectMapper mapper = new ObjectMapper();
         Random random = new Random();
         int rand = random.nextInt(2) + 1;
@@ -51,7 +51,7 @@ public class Technical {
             new TypeReference<List<Map<String, Integer>>>() {}
         );
 
-
+        String analysisResult = "";
         Future<Integer> bullishCount;
         Future<Integer> bearishCount;
         ThreadPoolExecutor executor =
@@ -63,13 +63,18 @@ public class Technical {
         System.out.println("Bullish patterns found: " + bullishCount.get());
         System.out.println("Bearish patterns found: " + bearishCount.get());
 
+
        if(bullishCount.get() > bearishCount.get()){
-            System.out.println("Overall trend is Bullish");
+           analysisResult = "Overall trend is Bullish";
+            System.out.println(analysisResult);
         } else if(bearishCount.get() > bullishCount.get()){
-            System.out.println("Overall trend is Bearish");
+           analysisResult = "Overall trend is Bearish";
+            System.out.println(analysisResult);
         } else {
-            System.out.println("Overall trend is Neutral");
+           analysisResult = "Overall trend is Neutral";
+            System.out.println(analysisResult);
         }
+       return analysisResult;
     }
 
     public Integer analyseBullish(List<Map<String, Integer>> data){
