@@ -51,14 +51,14 @@ public class StockDataConsumer {
 
     private void analyzeStockData(StockData stockData) {
         // Basic analysis logic
-        if (stockData.getHigh() > stockData.getLow() * 1.05) {
-            System.out.println("High volatility detected for " + stockData.getSymbol());
+        if (stockData.high() > stockData.low() * 1.05) {
+            System.out.println("High volatility detected for " + stockData.symbol());
         }
         
-        if (stockData.getClose() > stockData.getOpen()) {
-            System.out.println("Bullish movement for " + stockData.getSymbol());
+        if (stockData.close() > stockData.open()) {
+            System.out.println("Bullish movement for " + stockData.symbol());
         } else {
-            System.out.println("Bearish movement for " + stockData.getSymbol());
+            System.out.println("Bearish movement for " + stockData.symbol());
         }
     }
 
