@@ -1,4 +1,4 @@
-package com.trader.config.enums;
+package com.trader.app.config.enums;
 
 public enum Currency {
 

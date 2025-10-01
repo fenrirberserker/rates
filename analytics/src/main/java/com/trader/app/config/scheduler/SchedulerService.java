@@ -1,4 +1,4 @@
-package com.trader.config.scheduler;
+package com.trader.app.config.scheduler;
 
 import com.trader.app.analytics.service.symbols.btc.BtcServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -1,4 +1,4 @@
-package com.trader.config.enums;
+package com.trader.app.config.enums;
 
 public class Constants {
     public static final String CURRENCY="currency";

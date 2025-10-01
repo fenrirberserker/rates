@@ -1,4 +1,4 @@
-package com.trader.config;
+package com.trader.app.config;
 
 // Kafka configuration commented out for demo mode
 // Uncomment when using external Kafka broker

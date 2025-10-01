@@ -1,4 +1,4 @@
-package com.trader.config;
+package com.trader.app.config;
 
 public class Params {
 
