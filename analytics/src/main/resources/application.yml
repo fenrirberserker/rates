@@ -24,3 +24,24 @@ stock:
   api:
     key: YOUR_API_KEY_HERE
     base-url: https://www.alphavantage.co/query
+
+spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      group-id: trading-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+
+trading:
+  kafka:
+    topic: trading-events
+  websocket:
+    endpoint: /ws
+    destination: /topic/trading-events
+    allowed-origins: http://localhost:3000
+  api:
+    base-path: /api/trading

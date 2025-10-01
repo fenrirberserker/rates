@@ -1,4 +1,4 @@
-package com.trader.app.analytics.service;
+package com.trader.app.analytics.service.symbols.btc;
 
 public interface BtcService {
 

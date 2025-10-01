@@ -1,5 +1,6 @@
 package com.trader.app.analytics.providers.streams;
 
+import com.trader.app.analytics.service.EventProducer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -17,6 +18,9 @@ public class StockDataProducer {
     
     @Autowired
     private RealStockDataProvider realDataProvider;
+    
+    @Autowired
+    private EventProducer eventProducer;
     
     @Value("${stock.data.use-real:false}")
     private boolean useRealData;
@@ -59,6 +63,7 @@ public class StockDataProducer {
             }
 
             queue.publish(stockData);
+            eventProducer.sendTradingEvent(stockData);
             System.out.println("Sent (" + (useRealData ? "REAL" : "FAKE") + "): " + stockData);
             
         } catch (Exception e) {

@@ -1,4 +1,4 @@
-package com.trader.app.analytics.service;
+package com.trader.app.analytics.service.symbols.btc;
 
 import com.trader.app.analytics.providers.blockchaininfo.BlockChainConstants;
 import org.springframework.http.ResponseEntity;

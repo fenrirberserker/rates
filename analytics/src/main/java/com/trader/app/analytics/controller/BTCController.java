@@ -1,12 +1,11 @@
 package com.trader.app.analytics.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
-import com.trader.app.analytics.service.BtcService;
+import com.trader.app.analytics.service.symbols.btc.BtcService;
 
 import javax.websocket.server.PathParam;
 
