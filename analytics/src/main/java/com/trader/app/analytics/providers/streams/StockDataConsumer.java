@@ -49,6 +49,7 @@ public class StockDataConsumer {
         }
     }
 
+    //Use apropriate strategy
     private void analyzeStockData(StockData stockData) {
         // Basic analysis logic
         if (stockData.high() > stockData.low() * 1.05) {

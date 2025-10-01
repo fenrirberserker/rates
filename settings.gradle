@@ -9,3 +9,5 @@ pluginManagement {
 rootProject.name = 'trader'
 
 include 'analytics'
+include 'ui'
+include 'frontend-stock-visualizer'

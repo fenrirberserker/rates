@@ -6,6 +6,8 @@ app:
   isCloud: false
 
 aws:
+  profile: default
+  region: us-east-1
   dynamodb:
     endpoint: http://localhost:4566
   ses:
