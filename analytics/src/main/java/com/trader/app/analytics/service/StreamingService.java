@@ -1,5 +1,7 @@
-package com.trader.app.analytics.providers.streams;
+package com.trader.app.analytics.service;
 
+import com.trader.app.analytics.providers.streams.StockDataConsumer;
+import com.trader.app.analytics.providers.streams.StockDataProducer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

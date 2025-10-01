@@ -1,5 +1,9 @@
 package com.trader.app.config;
 
+// WebSocket configuration disabled for SSE-only architecture
+// Uncomment when WebSocket support is needed
+
+/*
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
@@ -29,3 +33,4 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                 .withSockJS();
     }
 }
+*/

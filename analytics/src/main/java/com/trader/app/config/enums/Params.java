@@ -1,4 +1,4 @@
-package com.trader.app.config;
+package com.trader.app.config.enums;
 
 public class Params {
 

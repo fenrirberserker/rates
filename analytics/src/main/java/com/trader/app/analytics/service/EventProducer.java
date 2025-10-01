@@ -7,9 +7,9 @@ import org.springframework.stereotype.Service;
 public class EventProducer {
     
     @Autowired
-    private KafkaBridge kafkaBridge;
+    private SseEventBridge sseEventBridge;
     
     public void sendTradingEvent(Object event) {
-        kafkaBridge.forwardToWebSocket(event);
+        sseEventBridge.sendToClients(event);
     }
 }

@@ -37,11 +37,9 @@ spring:
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
 
 trading:
-  kafka:
-    topic: trading-events
-  websocket:
-    endpoint: /ws
-    destination: /topic/trading-events
-    allowed-origins: http://localhost:3000
   api:
     base-path: /api/trading
+    event-endpoint: /event
+    events-endpoint: /events
+    events-content-type: text/event-stream
+    allowed-origins: http://localhost:3000
