@@ -21,9 +21,28 @@ analytics:
 stock:
   data:
     use-real: false
+    provider: finnhub  # Options: alphavantage, finnhub, iex, twelvedata
+  providers:
+    alphavantage:
+      api-key: YOUR_ALPHAVANTAGE_KEY
+      base-url: https://www.alphavantage.co/query
+      rate-limit: 5  # requests per minute
+    finnhub:
+      api-key: YOUR_FINNHUB_TOKEN
+      base-url: https://finnhub.io/api/v1
+      rate-limit: 60  # requests per minute
+    iex:
+      api-key: YOUR_IEX_TOKEN
+      base-url: https://cloud.iexapis.com/stable
+      rate-limit: 100  # requests per minute
+    twelvedata:
+      api-key: YOUR_TWELVEDATA_KEY
+      base-url: https://api.twelvedata.com
+      rate-limit: 33  # requests per minute
+  # Legacy support (will be removed)
   api:
-    key: YOUR_API_KEY_HERE
-    base-url: https://www.alphavantage.co/query
+    key: ${stock.providers.${stock.data.provider}.api-key}
+    base-url: ${stock.providers.${stock.data.provider}.base-url}
 
 spring:
   kafka:
@@ -43,3 +62,6 @@ trading:
     events-endpoint: /events
     events-content-type: text/event-stream
     allowed-origins: http://localhost:3000
+  rate-limiting:
+    enabled: true
+    requests-per-minute: ${stock.providers.${stock.data.provider}.rate-limit}

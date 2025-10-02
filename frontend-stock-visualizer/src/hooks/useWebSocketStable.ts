@@ -61,7 +61,7 @@ export const useWebSocketStable = () => {
         
         // Update state to trigger re-render
         setStockData(prev => {
-          const maxPoints = 30;
+          const maxPoints = 100;
           const newData = [...prev, stockData];
           return newData.length > maxPoints ? newData.slice(-maxPoints) : newData;
         });

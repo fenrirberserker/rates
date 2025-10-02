@@ -1,5 +1,5 @@
-import React, { useMemo, useRef, useEffect } from 'react';
-import { 
+import React from 'react';
+import {
   LineChart, 
   Line, 
   XAxis, 
@@ -14,7 +14,6 @@ import {
   AreaChart
 } from 'recharts';
 import { useWebSocketStable } from '../hooks/useWebSocketStable';
-import { StockData } from '../types/stockTypes';
 import './StockVisualizer.css';
 
 const StockVisualizer: React.FC = React.memo(() => {
@@ -71,6 +70,10 @@ const StockVisualizer: React.FC = React.memo(() => {
             <div className="data-card low">
               <h3>Low</h3>
               <span className="value">{formatCurrency(currentData.low)}</span>
+            </div>
+            <div className="data-card open">
+                <h3>Open</h3>
+                <span className="value">{formatCurrency(currentData.open)}</span>
             </div>
             <div className="data-card close">
               <h3>Close</h3>
