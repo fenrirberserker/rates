@@ -24,19 +24,19 @@ stock:
     provider: finnhub  # Options: alphavantage, finnhub, iex, twelvedata
   providers:
     alphavantage:
-      api-key: YOUR_ALPHAVANTAGE_KEY
+      api-key: ${ALPHAVANTAGE_API_KEY:}
       base-url: https://www.alphavantage.co/query
       rate-limit: 5  # requests per minute
     finnhub:
-      api-key: YOUR_FINNHUB_TOKEN
+      api-key: ${FINNHUB_API_KEY:}
       base-url: https://finnhub.io/api/v1
       rate-limit: 60  # requests per minute
     iex:
-      api-key: YOUR_IEX_TOKEN
+      api-key: ${IEX_API_KEY:}
       base-url: https://cloud.iexapis.com/stable
       rate-limit: 100  # requests per minute
     twelvedata:
-      api-key: YOUR_TWELVEDATA_KEY
+      api-key: ${TWELVEDATA_API_KEY:}
       base-url: https://api.twelvedata.com
       rate-limit: 33  # requests per minute
   # Legacy support (will be removed)
