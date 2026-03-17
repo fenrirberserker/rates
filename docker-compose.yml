@@ -1,0 +1,51 @@
+version: '3.8'
+
+# Local development stack for the trader app.
+# Kafka runs in KRaft mode — no Zookeeper needed.
+#
+# Usage:
+#   docker compose up -d          → start all services
+#   docker compose down           → stop and remove containers
+#   docker compose logs -f kafka  → tail Kafka logs
+
+services:
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: trader-kafka
+    ports:
+      - "9092:9092"
+    environment:
+      # KRaft: this node acts as both broker and controller
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+
+      # Single-node quorum: node 1 is the only voter, reachable on the CONTROLLER listener
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+
+      # Two listeners:
+      #   PLAINTEXT  → clients (your Spring app) connect here on port 9092
+      #   CONTROLLER → internal KRaft consensus traffic on port 9093
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      # Topics are created automatically on first publish
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+
+      # Fixed cluster ID for local dev — must be a 22-char base64 string
+      # Generate a fresh one with: kafka-storage.sh random-uuid
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+
+  # AWS mock (DynamoDB, SNS, SES) — matches the endpoints in application.yml
+  localstack:
+    image: localstack/localstack:3.0
+    container_name: trader-localstack
+    ports:
+      - "4566:4566"
+    environment:
+      SERVICES: dynamodb,sns,ses
+      DEFAULT_REGION: us-east-1

@@ -31,12 +31,6 @@ export const useWebSocketStable = () => {
       
       eventSource.onmessage = (event) => {
         const rawData = JSON.parse(event.data);
-        
-        // Filter only AAPL data
-        if (rawData.symbol !== 'AAPL') {
-          return;
-        }
-        
         const timestamp = new Date();
         const stockData: StockData = {
           symbol: rawData.symbol,

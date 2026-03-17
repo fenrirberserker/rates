@@ -1,70 +1,272 @@
-# Getting Started with Create React App
+# Stock Data Visualizer
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A real-time React frontend application that visualizes stock data consumed from a Kafka producer. The application displays high/low stock values in multiple chart formats with real-time updates.
 
-## Available Scripts
+## Features
 
-In the project directory, you can run:
+- **Real-time Data Visualization**: Live charts showing High/Low stock prices
+- **Multiple Chart Types**: Line charts, area charts, and bar charts for spread analysis
+- **Connection Status**: Real-time connection status indicator
+- **Data Table**: Recent stock data in tabular format
+- **Responsive Design**: Works on desktop and mobile devices
+- **Kafka Integration**: Consumes data from Kafka topics
+- **Data Simulation**: Falls back to simulated data when Kafka is unavailable
 
-### `npm start`
+## Data Format
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+The application expects JSON data in the following format:
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+```json
+{
+  "High": 100,
+  "Low": 78
+}
+```
 
-### `npm test`
+## Project Structure
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+```
+frontend-stock-visualizer/
+├── src/
+│   ├── components/
+│   │   ├── StockVisualizer.tsx
+│   │   └── StockVisualizer.css
+│   ├── hooks/
+│   │   └── useWebSocket.ts
+│   ├── types/
+│   │   └── stockTypes.ts
+│   ├── App.tsx
+│   ├── App.css
+│   └── index.tsx
+├── server/
+│   ├── server.js
+│   └── package.json
+├── public/
+└── README.md
+```
 
-### `npm run build`
+## Setup Instructions
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### Prerequisites
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+- Node.js (v14 or higher)
+- npm or yarn
+- Kafka cluster (optional - app will simulate data if unavailable)
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### Frontend Setup
 
-### `npm run eject`
+1. **Install dependencies**:
+   ```bash
+   npm install
+   ```
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+2. **Start the React development server**:
+   ```bash
+   npm start
+   ```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+   The app will run on `http://localhost:3000`
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+### Backend Setup
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+1. **Navigate to the server directory**:
+   ```bash
+   cd server
+   ```
 
-## Learn More
+2. **Install server dependencies**:
+   ```bash
+   npm install
+   ```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+3. **Start the WebSocket server**:
+   ```bash
+   npm start
+   ```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+   The server will run on `http://localhost:3001`
 
-### Code Splitting
+## Configuration
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+### Environment Variables
 
-### Analyzing the Bundle Size
+You can configure the backend server using environment variables:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+- `PORT`: Server port (default: 3001)
+- `KAFKA_BROKERS`: Comma-separated list of Kafka brokers (default: localhost:9092)
+- `KAFKA_TOPIC`: Kafka topic name (default: stock-data)
+- `SIMULATE_DATA`: Set to 'false' to disable data simulation (default: true)
+- `DEMO_MODE`: Set to 'false' to disable demo mode (default: true)
 
-### Making a Progressive Web App
+### Example Environment Setup
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+Create a `.env` file in the server directory:
 
-### Advanced Configuration
+```env
+PORT=3001
+KAFKA_BROKERS=localhost:9092,localhost:9093
+KAFKA_TOPIC=stock-prices
+SIMULATE_DATA=true
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+## Quick Demo Start
 
-### Deployment
+### One-Click Demo Launch
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+For the easiest demo experience, use the provided launcher scripts:
 
-### `npm run build` fails to minify
+**Windows (PowerShell - Recommended):**
+```powershell
+.\start-demo.ps1
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+**Windows (Command Prompt):**
+```cmd
+start-demo.bat
+```
+
+These scripts will:
+- Install dependencies automatically if needed
+- Start the backend server in demo mode
+- Start the React frontend
+- Open your browser to the application
+- Generate random stock data (1-100) every second
+
+### Manual Demo Start
+
+1. **Start the backend server:**
+   ```bash
+   cd server
+   npm install
+   npm start
+   ```
+
+2. **Start the frontend (in a new terminal):**
+   ```bash
+   npm install
+   npm start
+   ```
+
+3. **Open your browser to:** `http://localhost:3000`
+
+The demo will immediately start generating random stock data with High/Low values between 1-100 every second.
+
+## Usage
+
+### Running with Kafka
+
+1. **Start your Kafka cluster**
+2. **Create a topic** for stock data:
+   ```bash
+   kafka-topics --create --topic stock-data --bootstrap-server localhost:9092
+   ```
+3. **Produce data** to the topic in the expected JSON format:
+   ```bash
+   kafka-console-producer --topic stock-data --bootstrap-server localhost:9092
+   ```
+4. **Start the backend server**:
+   ```bash
+   cd server && npm start
+   ```
+5. **Start the React app**:
+   ```bash
+   npm start
+   ```
+
+### Running with Simulated Data
+
+If Kafka is not available, the server automatically falls back to simulating stock data:
+
+1. **Start the backend server**:
+   ```bash
+   cd server && npm start
+   ```
+2. **Start the React app**:
+   ```bash
+   npm start
+   ```
+
+The server will generate random stock data every 2 seconds.
+
+## API Endpoints
+
+The backend server provides the following endpoints:
+
+- `GET /health`: Health check and status information
+- `GET /config`: Current server configuration
+
+### Example Health Response
+
+```json
+{
+  "status": "ok",
+  "timestamp": "2024-01-01T12:00:00.000Z",
+  "kafka_connected": false,
+  "simulating": true,
+  "connected_clients": 1
+}
+```
+
+## Technology Stack
+
+### Frontend
+- **React 18** with TypeScript
+- **Recharts** for data visualization
+- **Socket.io-client** for WebSocket connections
+- **CSS Grid/Flexbox** for responsive layouts
+
+### Backend
+- **Node.js** with Express
+- **Socket.io** for WebSocket communication
+- **KafkaJS** for Kafka integration
+- **CORS** for cross-origin requests
+
+## Development
+
+### Running in Development Mode
+
+1. **Start backend with auto-reload**:
+   ```bash
+   cd server && npm run dev
+   ```
+
+2. **Start frontend**:
+   ```bash
+   npm start
+   ```
+
+### Building for Production
+
+1. **Build the React app**:
+   ```bash
+   npm run build
+   ```
+
+2. **Start production server**:
+   ```bash
+   cd server && npm start
+   ```
+
+## Troubleshooting
+
+### Connection Issues
+
+- Ensure the backend server is running on port 3001
+- Check CORS configuration if accessing from different domains
+- Verify WebSocket URL in the React app matches the server
+
+### Kafka Issues
+
+- Verify Kafka brokers are accessible
+- Check topic exists and has the correct name
+- Ensure data format matches expected JSON structure
+- The app will fall back to simulation if Kafka is unavailable
+
+### Performance Issues
+
+- The app keeps only the last 100 data points for performance
+- Consider implementing data aggregation for high-frequency updates
+
+## License
+
+MIT License

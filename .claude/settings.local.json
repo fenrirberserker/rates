@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find /d/IT/PROJECTS/SPRING/trader -maxdepth 2 -name README* -type f)"
+    ]
+  }
+}

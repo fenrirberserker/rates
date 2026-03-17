@@ -10,4 +10,3 @@ rootProject.name = 'trader'
 
 include 'core'
 include 'ui'
-include 'frontend-stock-visualizer'

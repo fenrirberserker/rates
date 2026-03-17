@@ -18,31 +18,36 @@ aws:
 analytics:
   elementsInTheMiddle: 5
 
+# ---------------------------------------------------------------
+# Stock data configuration
+#
+# Switch between fake and real data:
+#   use-real: false  → generates random fake data every 1s (default, no API key needed)
+#   use-real: true   → calls the configured provider every 12s (set the API key below)
+#
+# Provider options: finnhub, alphavantage, iex, twelvedata
+# ---------------------------------------------------------------
 stock:
   data:
     use-real: false
-    provider: finnhub  # Options: alphavantage, finnhub, iex, twelvedata
+    provider: finnhub
   providers:
     alphavantage:
       api-key: ${ALPHAVANTAGE_API_KEY:}
       base-url: https://www.alphavantage.co/query
-      rate-limit: 5  # requests per minute
+      rate-limit: 5
     finnhub:
       api-key: ${FINNHUB_API_KEY:}
       base-url: https://finnhub.io/api/v1
-      rate-limit: 60  # requests per minute
+      rate-limit: 60
     iex:
       api-key: ${IEX_API_KEY:}
       base-url: https://cloud.iexapis.com/stable
-      rate-limit: 100  # requests per minute
+      rate-limit: 100
     twelvedata:
       api-key: ${TWELVEDATA_API_KEY:}
       base-url: https://api.twelvedata.com
-      rate-limit: 33  # requests per minute
-  # Legacy support (will be removed)
-  api:
-    key: ${stock.providers.${stock.data.provider}.api-key}
-    base-url: ${stock.providers.${stock.data.provider}.base-url}
+      rate-limit: 33
 
 spring:
   kafka:
@@ -54,6 +59,15 @@ spring:
       group-id: trading-group
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      auto-offset-reset: latest
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+
+# Kafka topic names
+kafka:
+  topic:
+    stock-data: stock-data
 
 trading:
   api:
