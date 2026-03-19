@@ -9,8 +9,9 @@ import java.util.Map;
  * Typesafe binding for all stock.* properties in application.yml.
  *
  * Spring relaxed binding handles kebab-case → camelCase automatically:
- *   use-real        → useReal
- *   base-price-min  → basePriceMin
+ *   use-real         → useReal
+ *   symbol-groups    → symbolGroups
+ *   base-price-min   → basePriceMin
  *   sink-buffer-size → sinkBufferSize
  *   etc.
  */
@@ -22,11 +23,27 @@ public record StockProperties(
     public record DataConfig(
             boolean useReal,
             String provider,
-            List<String> symbols,
+            Map<String, List<String>> symbolGroups,
             IntervalConfig interval,
             FakeDataConfig fake,
             int sinkBufferSize
-    ) {}
+    ) {
+        /** Flat list of all symbols across all groups — used by the producer. */
+        public List<String> symbols() {
+            return symbolGroups.values().stream()
+                    .flatMap(List::stream)
+                    .toList();
+        }
+
+        /** Looks up the type for a given symbol; returns "OTHER" if not configured. */
+        public String typeOf(String symbol) {
+            return symbolGroups.entrySet().stream()
+                    .filter(e -> e.getValue().contains(symbol.toUpperCase()))
+                    .map(Map.Entry::getKey)
+                    .findFirst()
+                    .orElse("OTHER");
+        }
+    }
 
     /** Polling intervals for fake and real data modes. */
     public record IntervalConfig(

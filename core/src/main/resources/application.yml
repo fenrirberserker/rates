@@ -70,12 +70,16 @@ stock:
   data:
     use-real: false
     provider: finnhub
-    symbols:
-      - AAPL
-      - GOOGL
-      - MSFT
-      - TSLA
-      - AMZN
+    # Symbols are grouped by type. The flat symbols list is derived from these groups at runtime.
+    # To add a new type or symbol, just add it here — no code changes needed.
+    symbol-groups:
+      COMPANY:
+        - TSLA
+        - GOOGL
+        - AMZN
+      CRYPTO:
+        - BTC
+        - ETH
     interval:
       real-seconds: 12
       fake-seconds: 1

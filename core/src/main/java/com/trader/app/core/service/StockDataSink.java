@@ -23,7 +23,7 @@ public class StockDataSink {
     public StockDataSink(StockProperties properties) {
         this.sink = Sinks.many()
                 .multicast()
-                .onBackpressureBuffer(properties.data().sinkBufferSize());
+                .onBackpressureBuffer(properties.data().sinkBufferSize(), false);
     }
 
     public void emit(StockData data) {

@@ -1,6 +1,7 @@
 // Stock data interfaces
 export interface StockData {
   symbol: string;
+  type: string;
   high: number;
   low: number;
   open: number;

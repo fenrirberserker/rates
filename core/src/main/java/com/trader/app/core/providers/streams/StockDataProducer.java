@@ -68,6 +68,7 @@ public class StockDataProducer {
                     .map(tick -> symbols.get((int) (index.getAndIncrement() % symbols.size())))
                     .flatMap(symbol ->
                             realDataProvider.getRealTimeQuote(symbol)
+                                    .map(data -> data.withType(properties.data().typeOf(symbol)))
                                     .switchIfEmpty(Mono.fromSupplier(() -> {
                                         log.warn("No data returned for {}, using fake", symbol);
                                         return generateFakeData(symbol);
@@ -75,8 +76,12 @@ public class StockDataProducer {
                     );
         }
 
+        // Emit one data point for every symbol on each tick so every symbol
+        // updates at the configured interval, not just one random symbol per tick.
         return Flux.interval(interval)
-                .map(tick -> generateFakeData(symbols.get(random.nextInt(symbols.size()))));
+                .flatMapIterable(tick -> symbols.stream()
+                        .map(this::generateFakeData)
+                        .toList());
     }
 
     private StockData generateFakeData(String symbol) {
@@ -84,6 +89,7 @@ public class StockDataProducer {
         double base = fake.basePriceMin() + random.nextDouble() * fake.basePriceRange();
         return new StockData(
                 symbol,
+                properties.data().typeOf(symbol),                             // type
                 base + random.nextDouble() * fake.priceVariation(),   // high
                 base - random.nextDouble() * fake.priceVariation(),   // low
                 base + random.nextDouble() * fake.ohlcVariation(),    // open

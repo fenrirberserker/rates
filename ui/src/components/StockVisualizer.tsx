@@ -1,52 +1,178 @@
-import React from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import {
-  LineChart, 
-  Line, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  Legend, 
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
   ResponsiveContainer,
-  BarChart,
-  Bar,
-  Area,
-  AreaChart
 } from 'recharts';
 import { useWebSocketStable } from '../hooks/useWebSocketStable';
+import { StockData } from '../types/stockTypes';
 import './StockVisualizer.css';
 
+const formatCurrency = (value: number) => `$${value.toFixed(2)}`;
+
+// OHLCV lines — each has a fixed semantic color
+const OHLCV_LINES = [
+  { key: 'high',  label: 'High',   color: '#4db876' },
+  { key: 'low',   label: 'Low',    color: '#e05c5c' },
+  { key: 'open',  label: 'Open',   color: '#e09e4d' },
+  { key: 'close', label: 'Close',  color: '#5b9cf6' },
+];
+
+// ----------------------------------------------------------------
+// DataLabels — OHLCV stat strip rendered below the chart
+// ----------------------------------------------------------------
+const DataLabels: React.FC<{ data: StockData }> = React.memo(({ data }) => (
+  <div className="data-labels">
+    <div className="data-label">
+      <span className="data-label-key">High</span>
+      <span className="data-label-value high-value">{formatCurrency(data.high)}</span>
+    </div>
+    <div className="data-label">
+      <span className="data-label-key">Low</span>
+      <span className="data-label-value low-value">{formatCurrency(data.low)}</span>
+    </div>
+    <div className="data-label">
+      <span className="data-label-key">Open</span>
+      <span className="data-label-value open-value">{formatCurrency(data.open)}</span>
+    </div>
+    <div className="data-label">
+      <span className="data-label-key">Close</span>
+      <span className="data-label-value close-value">{formatCurrency(data.close)}</span>
+    </div>
+    <div className="data-label">
+      <span className="data-label-key">Volume</span>
+      <span className="data-label-value">{data.volume?.toLocaleString()}</span>
+    </div>
+  </div>
+));
+DataLabels.displayName = 'DataLabels';
+
+// ----------------------------------------------------------------
+// SymbolChart — chart + data labels for the active symbol
+// ----------------------------------------------------------------
+const SymbolChart: React.FC<{ symbol: string; history: StockData[]; latest: StockData | null }> =
+  React.memo(({ symbol, history, latest }) => {
+    const chartData = useMemo(
+      () => history.map(d => ({ time: d.time, high: d.high, low: d.low, open: d.open, close: d.close })),
+      [history]
+    );
+
+    return (
+      <div className="symbol-view">
+        <h3 className="symbol-view-title">{symbol}</h3>
+
+        <div className="chart-section">
+          <ResponsiveContainer width="100%" height={320}>
+            <LineChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#2a2a2a" />
+              <XAxis
+                dataKey="time"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fontSize: 10, fill: '#888' }}
+                interval="preserveStartEnd"
+                angle={-30}
+                textAnchor="end"
+                height={50}
+              />
+              <YAxis
+                axisLine={false}
+                tickLine={false}
+                tick={{ fontSize: 11, fill: '#888' }}
+                tickFormatter={(v) => `$${v}`}
+              />
+              <Tooltip
+                formatter={(value, name) => [formatCurrency(Number(value)), name]}
+                isAnimationActive={false}
+                contentStyle={{ backgroundColor: '#1e1e1e', border: '1px solid #333', borderRadius: '6px', color: '#e0e0e0' }}
+                labelStyle={{ color: '#aaa' }}
+              />
+              <Legend wrapperStyle={{ color: '#aaa', fontSize: '0.85rem' }} />
+              {OHLCV_LINES.map(({ key, label, color }) => (
+                <Line
+                  key={key}
+                  type="monotone"
+                  dataKey={key}
+                  stroke={color}
+                  strokeWidth={2}
+                  dot={false}
+                  activeDot={false}
+                  isAnimationActive={false}
+                  name={label}
+                />
+              ))}
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+
+        {latest && <DataLabels data={latest} />}
+      </div>
+    );
+  });
+SymbolChart.displayName = 'SymbolChart';
+
+// ----------------------------------------------------------------
+// StockVisualizer — root component
+// ----------------------------------------------------------------
 const StockVisualizer: React.FC = React.memo(() => {
-  const { stockData, currentData, connectionStatus } = useWebSocketStable();
-  
-  // Use stockData directly for charts - no transformation needed
-  const chartData = stockData;
+  const { historyBySymbol, latestBySymbol, connectionStatus } = useWebSocketStable();
 
-  // Static chart configuration to prevent re-creation
-  const chartConfig = {
-    margin: { top: 10, right: 30, left: 0, bottom: 0 }
-  };
+  const [activeType, setActiveType]     = useState<string | null>(null);
+  const [activeSymbol, setActiveSymbol] = useState<string | null>(null);
 
-  const getConnectionStatusColor = () => {
-    if (connectionStatus.connected) return '#4CAF50';
-    if (connectionStatus.error) return '#F44336';
-    return '#FF9800';
-  };
+  const handleTypeClick = useCallback((type: string) => {
+    setActiveType(prev => prev === type ? prev : type);
+    setActiveSymbol(null);
+  }, []);
 
-  const formatCurrency = (value: number) => `$${value.toFixed(2)}`;
+  // Types in order of first appearance, derived from per-symbol history keys
+  const types = useMemo(() => {
+    const seen = new Set<string>();
+    const order: string[] = [];
+    for (const history of Object.values(historyBySymbol)) {
+      if (history.length > 0) {
+        const t = history[0].type;
+        if (!seen.has(t)) { seen.add(t); order.push(t); }
+      }
+    }
+    return order;
+  }, [historyBySymbol]);
+
+  // Symbols for the active type, in order of first appearance
+  const activeTypeSymbols = useMemo(() => {
+    if (!activeType) return [];
+    return Object.keys(historyBySymbol).filter(
+      sym => historyBySymbol[sym]?.[0]?.type === activeType
+    );
+  }, [historyBySymbol, activeType]);
+
+  // Full history for the active symbol — preserved across tab switches
+  const activeHistory = useMemo(
+    () => (activeSymbol ? historyBySymbol[activeSymbol] ?? [] : []),
+    [historyBySymbol, activeSymbol]
+  );
+
+  // Latest data point for the active symbol
+  const activeLatest = activeSymbol ? latestBySymbol[activeSymbol] ?? null : null;
+
+  const statusColor = connectionStatus.connected
+    ? '#4db876'
+    : connectionStatus.error ? '#e05c5c' : '#e09e4d';
 
   return (
     <div className="stock-visualizer">
       <header className="header">
         <h1>Stock Data Visualizer</h1>
         <div className="connection-status">
-          <div 
-            className="status-indicator"
-            style={{ backgroundColor: getConnectionStatusColor() }}
-          />
+          <div className="status-indicator" style={{ backgroundColor: statusColor }} />
           <span className="status-text">
             {connectionStatus.connected ? 'Connected' : 'Disconnected'}
-            {connectionStatus.error && ` - ${connectionStatus.error}`}
+            {connectionStatus.error && ` — ${connectionStatus.error}`}
           </span>
           {connectionStatus.lastUpdate && (
             <span className="last-update">
@@ -56,243 +182,58 @@ const StockVisualizer: React.FC = React.memo(() => {
         </div>
       </header>
 
-      <div className="current-data">
-        {currentData ? (
-          <div className="data-cards">
-            <div className="data-card symbol">
-              <h3>Symbol</h3>
-              <span className="value">{currentData.symbol}</span>
-            </div>
-            <div className="data-card high">
-              <h3>High</h3>
-              <span className="value">{formatCurrency(currentData.high)}</span>
-            </div>
-            <div className="data-card low">
-              <h3>Low</h3>
-              <span className="value">{formatCurrency(currentData.low)}</span>
-            </div>
-            <div className="data-card open">
-                <h3>Open</h3>
-                <span className="value">{formatCurrency(currentData.open)}</span>
-            </div>
-            <div className="data-card close">
-              <h3>Close</h3>
-              <span className="value">{formatCurrency(currentData.close)}</span>
-            </div>
-            <div className="data-card volume">
-              <h3>Volume</h3>
-              <span className="value">{currentData.volume?.toLocaleString()}</span>
-            </div>
-            <div className="data-card debug">
-              <h3>Data Points</h3>
-              <span className="value">{stockData.length}</span>
-            </div>
-          </div>
-        ) : (
-          <div className="no-data">
-            <p>Waiting for stock data...</p>
-          </div>
-        )}
-      </div>
-
-      <div className="charts-container">
-        <div className="chart-section">
-          <h2>Stock Price Trend</h2>
-          <ResponsiveContainer key="line-container" width="100%" height={300}>
-            <LineChart 
-              data={chartData}
-              margin={chartConfig.margin}
-            >
-              <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-              <XAxis 
-                dataKey="time" 
-                axisLine={false}
-                tickLine={false}
-                tick={{ fontSize: 10 }}
-                interval={"preserveStartEnd"}
-                angle={-30}
-                textAnchor="end"
-                height={60}
-              />
-              <YAxis 
-                axisLine={false}
-                tickLine={false}
-                tick={{ fontSize: 12 }}
-              />
-              <Tooltip 
-                formatter={(value, name) => [formatCurrency(Number(value)), name]}
-                labelStyle={{ color: '#333' }}
-                contentStyle={{ 
-                  backgroundColor: 'white', 
-                  border: '1px solid #ccc',
-                  borderRadius: '4px'
-                }}
-                isAnimationActive={false}
-              />
-              <Legend />
-              <Line 
-                type="monotone" 
-                dataKey="high" 
-                stroke="#4CAF50" 
-                strokeWidth={2}
-                dot={false}
-                activeDot={false}
-                isAnimationActive={false}
-                connectNulls={false}
-                name="High"
-              />
-              <Line 
-                type="monotone" 
-                dataKey="low" 
-                stroke="#F44336" 
-                strokeWidth={2}
-                dot={false}
-                activeDot={false}
-                isAnimationActive={false}
-                connectNulls={false}
-                name="Low"
-              />
-              <Line 
-                type="monotone" 
-                dataKey="close" 
-                stroke="#2196F3" 
-                strokeWidth={2}
-                dot={false}
-                activeDot={false}
-                isAnimationActive={false}
-                connectNulls={false}
-                name="Close"
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-
-        <div className="chart-section">
-          <h2>Price Range (Area Chart)</h2>
-          <ResponsiveContainer width="100%" height={300}>
-            <AreaChart 
-              data={chartData}
-              margin={chartConfig.margin}
-            >
-              <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-              <XAxis 
-                dataKey="time" 
-                axisLine={false}
-                tickLine={false}
-                tick={{ fontSize: 10 }}
-                interval={"preserveStartEnd"}
-                angle={-30}
-                textAnchor="end"
-                height={60}
-              />
-              <YAxis 
-                axisLine={false}
-                tickLine={false}
-                tick={{ fontSize: 12 }}
-              />
-              <Tooltip 
-                formatter={(value, name) => [formatCurrency(Number(value)), name]}
-                labelStyle={{ color: '#333' }}
-                contentStyle={{ 
-                  backgroundColor: 'white', 
-                  border: '1px solid #ccc',
-                  borderRadius: '4px'
-                }}
-                isAnimationActive={false}
-              />
-              <Legend />
-              <Area 
-                type="monotone" 
-                dataKey="high" 
-                stackId="1" 
-                stroke="#4CAF50" 
-                fill="#4CAF50" 
-                fillOpacity={0.3}
-                isAnimationActive={false}
-                name="High"
-              />
-              <Area 
-                type="monotone" 
-                dataKey="low" 
-                stackId="2" 
-                stroke="#F44336" 
-                fill="#F44336" 
-                fillOpacity={0.3}
-                isAnimationActive={false}
-                name="Low"
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-
-        <div className="chart-section">
-          <h2>Spread Analysis</h2>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart 
-              data={chartData}
-              margin={chartConfig.margin}
-            >
-              <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-              <XAxis 
-                dataKey="time" 
-                axisLine={false}
-                tickLine={false}
-                tick={{ fontSize: 10 }}
-                interval={"preserveStartEnd"}
-                angle={-30}
-                textAnchor="end"
-                height={60}
-              />
-              <YAxis 
-                axisLine={false}
-                tickLine={false}
-                tick={{ fontSize: 12 }}
-              />
-              <Tooltip 
-                formatter={(value) => [formatCurrency(Number(value)), 'Spread']}
-                labelStyle={{ color: '#333' }}
-                contentStyle={{ 
-                  backgroundColor: 'white', 
-                  border: '1px solid #ccc',
-                  borderRadius: '4px'
-                }}
-                isAnimationActive={false}
-              />
-              <Legend />
-              <Bar 
-                dataKey="spread" 
-                fill="#2196F3" 
-                name="Spread (High - Low)"
-                isAnimationActive={false}
-              />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      <div className="data-table">
-        <h2>Recent Data</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>Time</th>
-              <th>High</th>
-              <th>Low</th>
-              <th>Spread</th>
-            </tr>
-          </thead>
-          <tbody>
-            {stockData.slice(-10).reverse().map((data) => (
-              <tr key={data.id}>
-                <td>{data.timestamp.toLocaleTimeString()}</td>
-                <td className="high-value">{formatCurrency(data.high)}</td>
-                <td className="low-value">{formatCurrency(data.low)}</td>
-                <td>{formatCurrency(data.high - data.low)}</td>
-              </tr>
+      {types.length === 0 ? (
+        <div className="no-data"><p>Waiting for stock data…</p></div>
+      ) : (
+        <div className="main-panel">
+          {/* Type tabs */}
+          <div className="type-tabs">
+            {types.map(type => (
+              <button
+                key={type}
+                className={`type-tab${activeType === type ? ' active' : ''}`}
+                onClick={() => handleTypeClick(type)}
+              >
+                {type}
+              </button>
             ))}
-          </tbody>
-        </table>
-      </div>
+          </div>
+
+          {/* Symbol list */}
+          {activeType && (
+            <div className="symbol-list">
+              {activeTypeSymbols.length === 0 ? (
+                <span className="symbol-list-empty">Waiting for {activeType.toLowerCase()} symbols…</span>
+              ) : (
+                activeTypeSymbols.map(sym => (
+                  <button
+                    key={sym}
+                    className={`symbol-btn${activeSymbol === sym ? ' active' : ''}`}
+                    onClick={() => setActiveSymbol(sym)}
+                  >
+                    {sym}
+                  </button>
+                ))
+              )}
+            </div>
+          )}
+
+          {/* Chart + data labels — only when a symbol is selected */}
+          {activeSymbol && (
+            <SymbolChart
+              key={activeSymbol}
+              symbol={activeSymbol}
+              history={activeHistory}
+              latest={activeLatest}
+            />
+          )}
+
+          {/* Prompt when type selected but no symbol yet */}
+          {activeType && !activeSymbol && activeTypeSymbols.length > 0 && (
+            <div className="no-data"><p>Select a symbol to view its chart.</p></div>
+          )}
+        </div>
+      )}
     </div>
   );
 });

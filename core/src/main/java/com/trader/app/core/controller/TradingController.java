@@ -12,7 +12,6 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("${trading.api.base-path}")
-@CrossOrigin(origins = "${trading.api.allowed-origins}")
 public class TradingController {
 
     private final StockDataSink stockDataSink;
