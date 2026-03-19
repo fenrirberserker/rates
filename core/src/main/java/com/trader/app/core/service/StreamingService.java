@@ -1,57 +1,56 @@
 package com.trader.app.core.service;
 
+import com.trader.app.config.StockProperties;
 import com.trader.app.core.providers.streams.StockDataProducer;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.env.Environment;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import reactor.core.Disposable;
 
 @Service
+@Slf4j
 public class StreamingService {
 
-    @Autowired
-    private StockDataProducer producer;
+    private final StockDataProducer producer;
+    private final StockProperties properties;
 
-    @Autowired
-    private Environment env;
+    private Disposable subscription;
 
-    @Value("${stock.data.use-real:false}")
-    private boolean useRealData;
-
-    @Value("${stock.data.provider:finnhub}")
-    private String providerName;
+    public StreamingService(StockDataProducer producer, StockProperties properties) {
+        this.producer = producer;
+        this.properties = properties;
+    }
 
     /**
-     * Validates config and starts the producer on application startup.
-     * The Kafka consumer (@KafkaListener) lifecycle is managed by Spring automatically.
-     *
-     * To switch between fake and real data set in application.yml:
-     *   stock.data.use-real: false  → fake data every 1s  (default, no API key needed)
-     *   stock.data.use-real: true   → real API data every 12s (set provider API key)
+     * Validates config and starts the reactive producer pipeline on startup.
+     * The @KafkaListener in StockKafkaConsumer is managed by Spring automatically.
      */
     @PostConstruct
     public void startStreaming() {
-        if (useRealData) {
-            String apiKey = env.getProperty("stock.providers." + providerName + ".api-key", "");
-            if (apiKey.isBlank()) {
+        StockProperties.DataConfig data = properties.data();
+
+        if (data.useReal()) {
+            StockProperties.ProviderConfig providerConfig = properties.providers().get(data.provider());
+            if (providerConfig == null || providerConfig.apiKey().isBlank()) {
                 throw new IllegalStateException(
-                    "stock.data.use-real=true but no API key configured for provider '" + providerName + "'. " +
-                    "Set the " + providerName.toUpperCase() + "_API_KEY environment variable, " +
-                    "or switch back to fake data with stock.data.use-real=false."
+                        "stock.data.use-real=true but no API key configured for provider '" + data.provider() + "'. " +
+                        "Set the " + data.provider().toUpperCase() + "_API_KEY environment variable, " +
+                        "or switch back to fake data with stock.data.use-real=false."
                 );
             }
         }
 
-        System.out.println("=== Streaming service starting — data mode: "
-                + (useRealData ? "REAL (" + providerName + ")" : "FAKE") + " ===");
-        producer.startProducing();
+        log.info("=== Streaming service starting — data mode: {} ===",
+                data.useReal() ? "REAL (" + data.provider() + ")" : "FAKE");
+        subscription = producer.start();
     }
 
     @PreDestroy
     public void stopStreaming() {
-        System.out.println("Stopping streaming service...");
-        producer.stop();
+        log.info("Stopping streaming service...");
+        if (subscription != null && !subscription.isDisposed()) {
+            subscription.dispose();
+        }
     }
 }

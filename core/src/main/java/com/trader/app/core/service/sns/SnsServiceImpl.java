@@ -1,74 +1,46 @@
 package com.trader.app.core.service.sns;
 
-
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.sns.SnsClient;
 import software.amazon.awssdk.services.sns.model.PublishRequest;
 import software.amazon.awssdk.services.sns.model.PublishResponse;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-
 @Service
+@Slf4j
 public class SnsServiceImpl implements SnsService {
 
-/*
-    @Autowired
-    AmazonSNS amazonSNS;*/
-    String message = "Message";
-    String localTopic = "arn:aws:sns:us-east-1:000000000000:BTCValue";
-    String remoteTopic = "arn:aws:sns:us-east-1:912614154447:BTCValue";
+    private final SnsClient snsClient;
+    private final String topicArn;
 
-
-
-
+    public SnsServiceImpl(
+            SnsClient snsClient,
+            @Value("${app.isCloud}") boolean isCloud,
+            @Value("${aws.sns.topic.local-arn}") String localArn,
+            @Value("${aws.sns.topic.remote-arn}") String remoteArn) {
+        this.snsClient = snsClient;
+        this.topicArn = isCloud ? remoteArn : localArn;
+    }
 
     @Override
-    public void publish(String message) throws URISyntaxException {
-        pubTopic();
-
+    public void publish(String message) {
+        try {
+            PublishResponse result = snsClient.publish(PublishRequest.builder()
+                    .message(message)
+                    .topicArn(topicArn)
+                    .build());
+            log.info("SNS message sent — id: {}, status: {}",
+                    result.messageId(), result.sdkHttpResponse().statusCode());
+        } catch (Exception e) {
+            log.error("Failed to publish SNS message: {}", e.getMessage(), e);
+        }
     }
 
     @Override
     public void createSNSTopic(String topic) {
-
-        // Create an Amazon SNS topic.
-        /*final CreateTopicRequest createTopicRequest = new CreateTopicRequest(topic);
-        final CreateTopicResult createTopicResponse = amazonSNS.createTopic(createTopicRequest)
-
-        // Print the topic ARN.
-        System.out.println("TopicArn:" + createTopicResponse.getTopicArn());
-
-        // Print the request ID for the CreateTopicRequest action.
-        System.out.println("CreateTopicRequest: " + amazonSNS.getCachedResponseMetadata(createTopicRequest));*/
+        // SNS SDK v2 topic creation: snsClient.createTopic(r -> r.name(topic))
+        // Not yet implemented — placeholder for when topic management is needed.
+        log.warn("createSNSTopic('{}') called but not yet implemented", topic);
     }
-
-    public void pubTopic() throws URISyntaxException {
-
-        String message = "Message";
-        String localTopic = "arn:aws:sns:us-east-1:000000000000:BTCValue";
-        String remoteTopic = "arn:aws:sns:us-east-1:912614154447:BTCValue";
-        SnsClient snsClient = SnsClient.builder()
-                .endpointOverride(new URI("http://localhost:4566"))
-                .region(Region.US_EAST_1)
-                .build();
-
-        try {
-            PublishRequest request = PublishRequest.builder()
-                    .message(message)
-                    .topicArn(localTopic)
-                    .build();
-
-            PublishResponse result = snsClient.publish(request);
-            System.out.println(result.messageId() + " Message sent. Status was " + result.sdkHttpResponse().statusCode());
-            snsClient.close();
-        } catch (Exception e) {
-            // Handle exception
-        }
-
-    }
-
-
-
 }

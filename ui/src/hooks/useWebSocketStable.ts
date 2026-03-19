@@ -29,7 +29,7 @@ export const useWebSocketStable = () => {
         });
       };
       
-      eventSource.onmessage = (event) => {
+      const handleStockEvent = (event: MessageEvent) => {
         const rawData = JSON.parse(event.data);
         const timestamp = new Date();
         const stockData: StockData = {
@@ -41,30 +41,34 @@ export const useWebSocketStable = () => {
           volume: rawData.volume,
           timestamp,
           id: `${timestamp.getTime()}`,
-          time: timestamp.toLocaleTimeString('en-US', { 
-            hour12: false, 
-            hour: '2-digit', 
-            minute: '2-digit', 
-            second: '2-digit' 
+          time: timestamp.toLocaleTimeString('en-US', {
+            hour12: false,
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
           }),
           spread: rawData.high - rawData.low,
           index: timestamp.getTime()
         };
 
         setCurrentData(stockData);
-        
+
         // Update state to trigger re-render
         setStockData(prev => {
           const maxPoints = 100;
           const newData = [...prev, stockData];
           return newData.length > maxPoints ? newData.slice(-maxPoints) : newData;
         });
-        
+
         setConnectionStatus(prev => ({
           ...prev,
           lastUpdate: timestamp
         }));
       };
+
+      // Backend emits named SSE events ("stock-update") — onmessage only fires
+      // for unnamed events, so addEventListener is required for named event types.
+      eventSource.addEventListener('stock-update', handleStockEvent);
       
       eventSource.onerror = (error) => {
         console.error('SSE connection error:', error);

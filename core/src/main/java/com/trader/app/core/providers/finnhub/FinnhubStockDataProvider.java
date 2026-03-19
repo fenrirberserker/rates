@@ -1,58 +1,49 @@
 package com.trader.app.core.providers.finnhub;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.trader.app.config.StockProperties;
 import com.trader.app.core.providers.StockDataProvider;
 import com.trader.app.core.providers.streams.StockData;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
 @Component("finnhubProvider")
+@Slf4j
 public class FinnhubStockDataProvider implements StockDataProvider {
-    
-    private final RestTemplate restTemplate;
-    private final ObjectMapper objectMapper;
-    
-    @Value("${stock.providers.finnhub.api-key}")
-    private String apiKey;
-    
-    @Value("${stock.providers.finnhub.base-url}")
-    private String baseUrl;
-    
-    public FinnhubStockDataProvider() {
-        this.restTemplate = new RestTemplate();
-        this.objectMapper = new ObjectMapper();
+
+    private final WebClient webClient;
+    private final String apiKey;
+    private final int rateLimit;
+
+    public FinnhubStockDataProvider(WebClient.Builder webClientBuilder, StockProperties properties) {
+        StockProperties.ProviderConfig config = properties.providers().get("finnhub");
+        this.webClient = webClientBuilder.baseUrl(config.baseUrl()).build();
+        this.apiKey = config.apiKey();
+        this.rateLimit = config.rateLimit();
     }
-    
+
     @Override
-    public StockData getRealTimeQuote(String symbol) {
-        try {
-            String url = String.format("%s/quote?symbol=%s&token=%s", baseUrl, symbol, apiKey);
-            String response = restTemplate.getForObject(url, String.class);
-            JsonNode root = objectMapper.readTree(response);
-            
-            return new StockData(
-                symbol,
-                root.get("h").asDouble(),  // high
-                root.get("l").asDouble(),  // low
-                root.get("o").asDouble(),  // open
-                root.get("c").asDouble(),  // current/close
-                0L  // volume not in basic quote
-            );
-        } catch (Exception e) {
-            System.err.println("Finnhub API error for " + symbol + ": " + e.getMessage());
-            return null;
-        }
+    public Mono<StockData> getRealTimeQuote(String symbol) {
+        return webClient.get()
+                .uri("/quote?symbol={symbol}&token={token}", symbol, apiKey)
+                .retrieve()
+                .bodyToMono(JsonNode.class)
+                .map(root -> new StockData(
+                        symbol,
+                        root.get("h").asDouble(),            // high
+                        root.get("l").asDouble(),            // low
+                        root.get("o").asDouble(),            // open
+                        root.get("c").asDouble(),            // close (current price)
+                        root.path("v").asLong(0L)            // volume — not in Finnhub basic /quote; 0 if absent
+                ))
+                .onErrorResume(e -> {
+                    log.error("Finnhub API error for {}: {}", symbol, e.getMessage());
+                    return Mono.empty();
+                });
     }
-    
-    @Override
-    public String getProviderName() {
-        return "finnhub";
-    }
-    
-    @Override
-    public int getRateLimit() {
-        return 60;
-    }
+
+    @Override public String getProviderName() { return "finnhub"; }
+    @Override public int getRateLimit()        { return rateLimit; }
 }

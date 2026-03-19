@@ -5,32 +5,88 @@ app:
   name: bitcoin
   isCloud: false
 
+# ---------------------------------------------------------------
+# AWS configuration
+#
+# isCloud: false → all clients point to LocalStack at localstack.endpoint
+# isCloud: true  → all clients point to real AWS
+# ---------------------------------------------------------------
 aws:
   profile: default
   region: us-east-1
-  dynamodb:
+  localstack:
     endpoint: http://localhost:4566
   ses:
     config:
       from: mlex.alba@gmail.com
       to: mlex.alba@gmail.com
+  sns:
+    topic:
+      name: BTCValue
+      local-arn: arn:aws:sns:us-east-1:000000000000:BTCValue
+      remote-arn: arn:aws:sns:us-east-1:912614154447:BTCValue
 
+# ---------------------------------------------------------------
+# BTC / blockchain.info
+# ---------------------------------------------------------------
+btc:
+  provider:
+    url: https://blockchain.info/tobtc
+
+# ---------------------------------------------------------------
+# Analytics
+# ---------------------------------------------------------------
 analytics:
-  elementsInTheMiddle: 5
+  elements-in-the-middle: 5
+  sample-file: samples/sample-bullish1.json
 
 # ---------------------------------------------------------------
 # Stock data configuration
 #
-# Switch between fake and real data:
-#   use-real: false  → generates random fake data every 1s (default, no API key needed)
-#   use-real: true   → calls the configured provider every 12s (set the API key below)
+# use-real: false → fake random data, no API key needed (default)
+# use-real: true  → calls the configured provider (set API key below)
 #
-# Provider options: finnhub, alphavantage, iex, twelvedata
+# symbols: list of stock symbols to track
+#
+# interval:
+#   fake-seconds  → how often fake data is generated
+#   real-seconds  → how often the real provider is called
+#                   (keep >= 60 / rate-limit to avoid throttling)
+#
+# fake: controls the random data generator ranges
+#   base-price-min   → floor of the random base price
+#   base-price-range → added random range above the floor
+#   price-variation  → max random delta for high/low from base
+#   ohlc-variation   → max random delta for open/close from base
+#   volume-min       → minimum generated volume
+#   volume-range     → added random range above volume-min
+#
+# sink-buffer-size: max buffered events per SSE subscriber
+#   before backpressure drops events for slow clients
+#
+# provider options: finnhub, alphavantage, iex, twelvedata
 # ---------------------------------------------------------------
 stock:
   data:
     use-real: false
     provider: finnhub
+    symbols:
+      - AAPL
+      - GOOGL
+      - MSFT
+      - TSLA
+      - AMZN
+    interval:
+      real-seconds: 12
+      fake-seconds: 1
+    fake:
+      base-price-min: 100.0
+      base-price-range: 400.0
+      price-variation: 10.0
+      ohlc-variation: 5.0
+      volume-min: 1000
+      volume-range: 10000
+    sink-buffer-size: 1000
   providers:
     alphavantage:
       api-key: ${ALPHAVANTAGE_API_KEY:}
@@ -74,6 +130,7 @@ trading:
     base-path: /api/trading
     event-endpoint: /event
     events-endpoint: /events
+    event-type: stock-update
     events-content-type: text/event-stream
     allowed-origins: http://localhost:3000
   rate-limiting:

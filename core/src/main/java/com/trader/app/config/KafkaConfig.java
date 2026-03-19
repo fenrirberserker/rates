@@ -71,7 +71,7 @@ public class KafkaConfig {
     @Bean
     public ConsumerFactory<String, StockData> consumerFactory() {
         JsonDeserializer<StockData> deserializer = new JsonDeserializer<>(StockData.class, kafkaObjectMapper());
-        deserializer.addTrustedPackages("*");
+        deserializer.addTrustedPackages("com.trader");
 
         Map<String, Object> props = new HashMap<>();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);

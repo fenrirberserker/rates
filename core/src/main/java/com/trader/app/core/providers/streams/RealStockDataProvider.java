@@ -1,53 +1,52 @@
 package com.trader.app.core.providers.streams;
 
+import com.trader.app.config.StockProperties;
 import com.trader.app.core.providers.StockDataProvider;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import reactor.core.publisher.Mono;
 
+import java.util.List;
+
+/**
+ * Selects the active StockDataProvider at startup based on stock.data.provider config.
+ *
+ * Uses Spring's List<StockDataProvider> injection — every @Component that implements
+ * StockDataProvider is automatically registered here. Adding a new provider requires
+ * zero changes to this class (Open/Closed Principle).
+ */
 @Component
+@Slf4j
 public class RealStockDataProvider {
-    
-    private final StockDataProvider stockDataProvider;
-    
-    public RealStockDataProvider(@Value("${stock.data.provider}") String providerName,
-                                @Qualifier("finnhubProvider") StockDataProvider finnhubProvider,
-                                @Qualifier("alphavantageProvider") StockDataProvider alphavantageProvider,
-                                @Qualifier("iexProvider") StockDataProvider iexProvider,
-                                @Qualifier("twelvedataProvider") StockDataProvider twelvedataProvider) {
-        
-        switch (providerName.toLowerCase()) {
-            case "finnhub":
-                this.stockDataProvider = finnhubProvider;
-                break;
-            case "alphavantage":
-                this.stockDataProvider = alphavantageProvider;
-                break;
-            case "iex":
-                this.stockDataProvider = iexProvider;
-                break;
-            case "twelvedata":
-                this.stockDataProvider = twelvedataProvider;
-                break;
-            default:
-                throw new IllegalArgumentException("Unsupported provider: " + providerName);
-        }
-        
-        System.out.println("Using stock data provider: " + this.stockDataProvider.getProviderName() + 
-                          " (Rate limit: " + this.stockDataProvider.getRateLimit() + " req/min)");
-    }
-    
-    public StockData getRealTimeQuote(String symbol) {
-        return stockDataProvider.getRealTimeQuote(symbol);
-    }
-    
-    public String getProviderName() {
-        return stockDataProvider.getProviderName();
-    }
-    
-    public int getRateLimit() {
-        return stockDataProvider.getRateLimit();
-    }
-    
 
+    private final StockDataProvider activeProvider;
+
+    public RealStockDataProvider(List<StockDataProvider> providers, StockProperties properties) {
+        String providerName = properties.data().provider();
+
+        this.activeProvider = providers.stream()
+                .filter(p -> p.getProviderName().equalsIgnoreCase(providerName))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Unknown provider '" + providerName + "'. " +
+                        "Available: " + providers.stream()
+                                .map(StockDataProvider::getProviderName)
+                                .toList()
+                ));
+
+        log.info("Active stock data provider: {} (rate limit: {}/min)",
+                activeProvider.getProviderName(), activeProvider.getRateLimit());
+    }
+
+    public Mono<StockData> getRealTimeQuote(String symbol) {
+        return activeProvider.getRealTimeQuote(symbol);
+    }
+
+    public String getProviderName() {
+        return activeProvider.getProviderName();
+    }
+
+    public int getRateLimit() {
+        return activeProvider.getRateLimit();
+    }
 }

@@ -1,25 +1,24 @@
 package com.trader.app.core.providers;
 
 import com.trader.app.core.providers.streams.StockData;
+import reactor.core.publisher.Mono;
 
 public interface StockDataProvider {
-    
+
     /**
-     * Get real-time stock quote for a symbol
-     * @param symbol Stock symbol (e.g., AAPL, GOOGL)
-     * @return StockData or null if error
+     * Fetches a real-time quote for the given symbol.
+     * Returns Mono.empty() if the provider has no data (rate limited, bad symbol, etc.).
+     * Errors are handled internally — callers use switchIfEmpty() for fallback.
      */
-    StockData getRealTimeQuote(String symbol);
-    
+    Mono<StockData> getRealTimeQuote(String symbol);
+
     /**
-     * Get provider name
-     * @return Provider identifier
+     * Provider identifier — must match the value used in stock.data.provider config.
      */
     String getProviderName();
-    
+
     /**
-     * Get rate limit per minute
-     * @return Maximum requests per minute
+     * Maximum requests per minute this provider allows on the free tier.
      */
     int getRateLimit();
 }

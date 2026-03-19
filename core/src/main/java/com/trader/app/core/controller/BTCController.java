@@ -1,21 +1,26 @@
 package com.trader.app.core.controller;
 
 import com.trader.app.core.service.symbols.btc.BtcService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import reactor.core.publisher.Mono;
 
 @RestController
-@RequestMapping(value = "/btc")
+@RequestMapping("/btc")
 public class BTCController {
 
-	@Autowired
-	BtcService btcServiceImpl;
+    private final BtcService btcService;
 
-	@GetMapping(value = "/info", produces = "application/json")
-	public String btc(@RequestParam("currency") String currency, @RequestParam("value") Integer value) {
-		return btcServiceImpl.getBTC(currency, value);
-	}
+    public BTCController(BtcService btcService) {
+        this.btcService = btcService;
+    }
+
+    @GetMapping(value = "/info", produces = "application/json")
+    public Mono<String> btc(
+            @RequestParam("currency") String currency,
+            @RequestParam("value") Integer value) {
+        return btcService.getBTC(currency, value);
+    }
 }

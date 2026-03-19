@@ -1,61 +1,56 @@
 package com.trader.app.core.providers.alphavantage;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.trader.app.config.StockProperties;
 import com.trader.app.core.providers.StockDataProvider;
 import com.trader.app.core.providers.streams.StockData;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
 @Component("alphavantageProvider")
+@Slf4j
 public class AlphaVantageStockDataProvider implements StockDataProvider {
-    
-    private final RestTemplate restTemplate;
-    private final ObjectMapper objectMapper;
-    
-    @Value("${stock.providers.alphavantage.api-key}")
-    private String apiKey;
-    
-    @Value("${stock.providers.alphavantage.base-url}")
-    private String baseUrl;
-    
-    public AlphaVantageStockDataProvider() {
-        this.restTemplate = new RestTemplate();
-        this.objectMapper = new ObjectMapper();
+
+    private final WebClient webClient;
+    private final String apiKey;
+    private final int rateLimit;
+
+    public AlphaVantageStockDataProvider(WebClient.Builder webClientBuilder, StockProperties properties) {
+        StockProperties.ProviderConfig config = properties.providers().get("alphavantage");
+        this.webClient = webClientBuilder.baseUrl(config.baseUrl()).build();
+        this.apiKey = config.apiKey();
+        this.rateLimit = config.rateLimit();
     }
-    
+
     @Override
-    public StockData getRealTimeQuote(String symbol) {
-        try {
-            String url = String.format("%s?function=GLOBAL_QUOTE&symbol=%s&apikey=%s", baseUrl, symbol, apiKey);
-            String response = restTemplate.getForObject(url, String.class);
-            JsonNode root = objectMapper.readTree(response);
-            JsonNode quote = root.get("Global Quote");
-            
-            if (quote != null) {
-                return new StockData(
-                    symbol,
-                    Double.parseDouble(quote.get("03. high").asText()),
-                    Double.parseDouble(quote.get("04. low").asText()),
-                    Double.parseDouble(quote.get("02. open").asText()),
-                    Double.parseDouble(quote.get("05. price").asText()),
-                    Long.parseLong(quote.get("06. volume").asText())
-                );
-            }
-        } catch (Exception e) {
-            System.err.println("Alpha Vantage API error for " + symbol + ": " + e.getMessage());
-        }
-        return null;
+    public Mono<StockData> getRealTimeQuote(String symbol) {
+        return webClient.get()
+                .uri("?function=GLOBAL_QUOTE&symbol={symbol}&apikey={key}", symbol, apiKey)
+                .retrieve()
+                .bodyToMono(JsonNode.class)
+                .flatMap(root -> {
+                    JsonNode quote = root.get("Global Quote");
+                    if (quote == null || quote.isEmpty()) {
+                        log.warn("AlphaVantage returned empty Global Quote for {}", symbol);
+                        return Mono.empty();
+                    }
+                    return Mono.just(new StockData(
+                            symbol,
+                            Double.parseDouble(quote.get("03. high").asText()),    // high
+                            Double.parseDouble(quote.get("04. low").asText()),     // low
+                            Double.parseDouble(quote.get("02. open").asText()),    // open
+                            Double.parseDouble(quote.get("05. price").asText()),   // close (AlphaVantage field name is "05. price")
+                            Long.parseLong(quote.get("06. volume").asText())       // volume
+                    ));
+                })
+                .onErrorResume(e -> {
+                    log.error("AlphaVantage API error for {}: {}", symbol, e.getMessage());
+                    return Mono.empty();
+                });
     }
-    
-    @Override
-    public String getProviderName() {
-        return "alphavantage";
-    }
-    
-    @Override
-    public int getRateLimit() {
-        return 5;
-    }
+
+    @Override public String getProviderName() { return "alphavantage"; }
+    @Override public int getRateLimit()        { return rateLimit; }
 }
