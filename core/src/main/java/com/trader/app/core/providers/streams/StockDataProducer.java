@@ -1,6 +1,8 @@
 package com.trader.app.core.providers.streams;
 
 import com.trader.app.config.StockProperties;
+import com.trader.domain.model.StockData;
+import com.trader.app.core.providers.fake.FakeStockDataProvider;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -11,7 +13,6 @@ import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.util.List;
-import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Component
@@ -20,18 +21,19 @@ public class StockDataProducer {
 
     private final KafkaTemplate<String, StockData> kafkaTemplate;
     private final RealStockDataProvider realDataProvider;
+    private final FakeStockDataProvider fakeDataProvider;
     private final StockProperties properties;
 
     @Value("${kafka.topic.stock-data:stock-data}")
     private String topic;
 
-    private final Random random = new Random();
-
     public StockDataProducer(KafkaTemplate<String, StockData> kafkaTemplate,
                              RealStockDataProvider realDataProvider,
+                             FakeStockDataProvider fakeDataProvider,
                              StockProperties properties) {
         this.kafkaTemplate = kafkaTemplate;
         this.realDataProvider = realDataProvider;
+        this.fakeDataProvider = fakeDataProvider;
         this.properties = properties;
     }
 
@@ -71,7 +73,7 @@ public class StockDataProducer {
                                     .map(data -> data.withType(properties.data().typeOf(symbol)))
                                     .switchIfEmpty(Mono.fromSupplier(() -> {
                                         log.warn("No data returned for {}, using fake", symbol);
-                                        return generateFakeData(symbol);
+                                        return fakeDataProvider.getQuote(symbol);
                                     }))
                     );
         }
@@ -80,21 +82,7 @@ public class StockDataProducer {
         // updates at the configured interval, not just one random symbol per tick.
         return Flux.interval(interval)
                 .flatMapIterable(tick -> symbols.stream()
-                        .map(this::generateFakeData)
+                        .map(fakeDataProvider::getQuote)
                         .toList());
-    }
-
-    private StockData generateFakeData(String symbol) {
-        StockProperties.FakeDataConfig fake = properties.data().fake();
-        double base = fake.basePriceMin() + random.nextDouble() * fake.basePriceRange();
-        return new StockData(
-                symbol,
-                properties.data().typeOf(symbol),                             // type
-                base + random.nextDouble() * fake.priceVariation(),   // high
-                base - random.nextDouble() * fake.priceVariation(),   // low
-                base + random.nextDouble() * fake.ohlcVariation(),    // open
-                base + random.nextDouble() * fake.ohlcVariation(),    // close
-                fake.volumeMin() + (long) (random.nextDouble() * fake.volumeRange())  // volume
-        );
     }
 }

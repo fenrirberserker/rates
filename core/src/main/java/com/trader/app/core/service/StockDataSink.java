@@ -1,7 +1,7 @@
 package com.trader.app.core.service;
 
 import com.trader.app.config.StockProperties;
-import com.trader.app.core.providers.streams.StockData;
+import com.trader.domain.model.StockData;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;

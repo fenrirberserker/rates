@@ -7,7 +7,7 @@ group = 'com.trader'
 version = '0.0.1-SNAPSHOT'
 
 wrapper {
-    gradleVersion = '8.5'
+    gradleVersion = '8.14'
 }
 
 allprojects {
@@ -21,9 +21,15 @@ allprojects {
 subprojects {
 	apply plugin: 'java'
 	apply plugin: 'maven-publish'
-	
+
 	group = 'com.trader'
 	version = '0.0.1-SNAPSHOT'
+
+	java {
+		toolchain {
+			languageVersion = JavaLanguageVersion.of(21)
+		}
+	}
 }
 
 

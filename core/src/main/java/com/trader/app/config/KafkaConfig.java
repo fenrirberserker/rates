@@ -3,7 +3,7 @@ package com.trader.app.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.trader.app.core.providers.streams.StockData;
+import com.trader.domain.model.StockData;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -17,6 +17,7 @@ import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
+import org.springframework.kafka.support.serializer.ErrorHandlingDeserializer;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 
@@ -70,13 +71,18 @@ public class KafkaConfig {
 
     @Bean
     public ConsumerFactory<String, StockData> consumerFactory() {
-        JsonDeserializer<StockData> deserializer = new JsonDeserializer<>(StockData.class, kafkaObjectMapper());
-        deserializer.addTrustedPackages("com.trader");
+        JsonDeserializer<StockData> jsonDeserializer = new JsonDeserializer<>(StockData.class, kafkaObjectMapper());
+        // Ignore type headers — always deserialize to StockData regardless of what
+        // old messages have in their __TypeId__ header (avoids breaks after refactoring)
+        jsonDeserializer.addTrustedPackages("com.trader");
+        jsonDeserializer.setUseTypeHeaders(false);
+
+        // Wrap so malformed/old-format records are skipped instead of crashing the container
+        ErrorHandlingDeserializer<StockData> deserializer = new ErrorHandlingDeserializer<>(jsonDeserializer);
 
         Map<String, Object> props = new HashMap<>();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
-        // Start reading from the latest offset so we only see new events
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
 
         return new DefaultKafkaConsumerFactory<>(props, new StringDeserializer(), deserializer);

@@ -1,6 +1,6 @@
 package com.trader.app.core.providers;
 
-import com.trader.app.core.providers.streams.StockData;
+import com.trader.domain.model.StockData;
 import reactor.core.publisher.Mono;
 
 public interface StockDataProvider {

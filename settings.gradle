@@ -8,5 +8,8 @@ pluginManagement {
 
 rootProject.name = 'trader'
 
+include 'domain'
 include 'core'
+include 'notifications'
 include 'ui'
+include 'analytics'

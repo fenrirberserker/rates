@@ -1,0 +1,38 @@
+server:
+  port: 8081
+
+app:
+  name: notifications
+  isCloud: false
+
+aws:
+  profile: default
+  region: us-east-1
+  localstack:
+    endpoint: http://localhost:4566
+  ses:
+    config:
+      from: mlex.alba@gmail.com
+      to: mlex.alba@gmail.com
+  sns:
+    topic:
+      name: BTCValue
+      local-arn: arn:aws:sns:us-east-1:000000000000:BTCValue
+      remote-arn: arn:aws:sns:us-east-1:912614154447:BTCValue
+
+spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: notifications-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      auto-offset-reset: latest
+      properties:
+        spring.json.trusted.packages: "com.trader"
+        spring.json.use.type.headers: false
+        spring.json.value.default.type: com.trader.domain.model.StockData
+
+kafka:
+  topic:
+    stock-data: stock-data

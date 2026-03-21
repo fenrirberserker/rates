@@ -1,6 +1,6 @@
 package com.trader.app.core.controller;
 
-import com.trader.app.core.providers.streams.StockData;
+import com.trader.domain.model.StockData;
 import com.trader.app.core.service.StockDataSink;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;

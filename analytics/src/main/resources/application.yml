@@ -1,0 +1,31 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: analytics
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: analytics-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "com.trader.domain.model"
+        spring.json.value.default.type: "com.trader.domain.model.StockData"
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+
+kafka:
+  topic:
+    stock-data: stock-data
+
+# ---------------------------------------------------------------
+# Analytics
+# ---------------------------------------------------------------
+analytics:
+  elements-in-the-middle: 5
+  sample-file: samples/sample-bullish1.json
+  sink-buffer-size: 200

@@ -2,6 +2,7 @@ package com.trader.app.core.providers.streams;
 
 import com.trader.app.config.StockProperties;
 import com.trader.app.core.providers.StockDataProvider;
+import com.trader.domain.model.StockData;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
